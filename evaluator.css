@@ -1,0 +1,186 @@
+/* Priority Evaluator CSS */
+
+
+/* Qualtrics related */
+.Skin input[type=checkbox], .Skin input[type=radio] {
+	position: unset;
+	opacity: unset;
+	z-index: unset;
+	height: unset;
+	width: unset;
+}
+
+.centerOuter { 
+	font-family: helvetica,arial,sans-serif;
+}
+
+#chart { /* Note that qualtrics displays it bigger than test version. Also, to change it in qualtrics, inline html must be changed! */
+	width: 100% !important;	/* 500 */
+	/*height: 570px;	 800 */
+	min-width: 200px;
+	max-width: 450px;
+	min-height: 40vh;
+	max-height: 98vh !important;
+	margin: 40px 0px 40px auto;
+}
+
+.tabler td.disabledText {
+	color: #292929;
+}
+
+.tabler {
+	font-size: 16px;
+	border-collapse: collapse;
+	border-spacing: 0;
+	margin: 40px auto 40px;
+}
+
+.tabler th {
+	background-color: #1B3051;
+	color: #FFFFFF;
+	padding-left: 5px;
+	padding-right: 5px;
+	padding-top: 0px;
+	padding-bottom: 0px;
+	font-size: 15px;
+}
+
+.tabler th[colspan="2"] {
+    text-align: center;
+}
+
+#header_cost3investment {
+	border-right: white solid 2px;
+}
+
+.tabler,
+.tabler th,
+.tabler td {
+	border: none;
+	text-align: left;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	line-height: 1.2em;
+}
+
+.tabler td {
+	color: #000000;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.tabler select {
+	font-size: 16px;
+	padding-top: 1px;
+	padding-bottom: 1px;
+	padding-left: 1px;
+	padding-right: 0px;
+	border: 0.5px solid rgb(102, 102, 102);
+	background-color: #f0f0f0;
+	color: black;
+	max-width: 15em;
+}
+
+.tabler select:disabled, .tabler select[disabled] {
+	background-color: #f0f0f0af;
+	color: #5f5f5f;
+}
+
+.tabler input[type=checkbox] {
+	height: 15px;
+	width: 15px;
+	margin: 0px;
+}
+
+.mobility {
+	background-color: #9ec3ff;
+}
+
+.food {
+	background-color: #d99bfd;
+}
+
+.housing {
+	background-color: #fad79a;
+}
+
+.other {
+	background-color: #EDEAE5;
+}
+
+.tabler .target_reached {
+	text-align: center;
+	font-weight: bold;
+	background-color: #009E73;
+	color: #FFFFFF;
+}
+
+.tabler .target_not_reached {
+	text-align: center;
+	font-weight: bold;
+	background-color: #D55E00;
+	color: #FFFFFF;
+}
+
+.plot {
+	float: left;
+	width: 35%; 
+	box-sizing: border-box;
+}
+
+.inputs {
+	float: left;
+	width: 65%;
+}
+
+.centerOuter {
+	width: 100%;
+	height: 100%;
+}
+
+.centerInner {
+	width: 98%;
+	display: table;
+	margin: 0 auto;
+}
+
+.tooltip {
+	position: relative;
+	display: inline-block;
+	border-bottom: 1px dotted black;
+/*  			display: none; */
+}
+
+.tooltip .tooltiptext {
+	visibility: hidden;
+	width: 350px;
+	background-color: #04AA6D;
+	color: #FFFFFF;
+	text-align: left;
+	border-radius: 6px;
+	padding: 5px 0;
+
+	/* Position the tooltip */
+	position: absolute;
+	z-index: 1;
+	top: -5px;
+	right: 105%;
+}
+
+.tooltip:hover .tooltiptext {
+	visibility: visible;
+}
+
+tr.last_row {
+	border-top: 2px solid black;
+	font-weight: bold;
+}
+
+/*
+
+// This is what's added to the PE page to change the view port
+.Skin .SkinInner {width:100% !important;}
+.Skin .QuestionOuter.Matrix{ max-width: 100%; }
+.Skin #Buttons { margin-top:1px !important; padding-top:1px !important }
+
+*/

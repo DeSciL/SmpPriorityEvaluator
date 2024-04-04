@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Priority Evaluator</title>
+<link rel="stylesheet" href="evaluator.css">
+<!-- Script to initialize PE to the demo version ("home owner") settings -->
+<script>
+	var surveySettings = {
+        enableDebug: false,
+
+        language: "de", // de, fr, it, en
+        locale: "de-CH",
+
+        hasAccessToCar: true,
+        ownsCar: true,
+        carKilometrageYearly: 12000,
+        car: "petrol-medium", // petrol-small, petrol-medium, petrol-large, diesel-medium, diesel-large, phev-medium, phev-large, bev-small, bev-medium, bev-large
+        carValue: 30000,
+
+        trainKilometrageWeekly: 0,
+        tramKilometrageWeekly: 0, // ignored
+        busKilometrageWeekly: 0, // ignored
+
+        ptTicket: "half-fare", // none, region, half-fare, region-and-half-fare, season
+
+        numShortFlights: 0,
+        numMediumFlights: 0,
+        numLongFlights: 1,
+
+        hasBike: true,
+        hasEBike: true,
+        kilometrageBike: 0,
+        kilometrageEBike: 40,
+
+        diet: "omnivore", // omnivore, flexitarian, vegetarian, vegan
+
+        ownsHouse: true,
+        houseType: "detached", // flat, detached, semi-detached
+        houseStandard: "new", // old, renovated, new, minergie
+        householdMembers: 4,
+        houseSize: 180,
+        heatingType: "oil", // oil, gas, electric, heat-pump, wood, district-heating, unknown
+		hasSolarPanels: false,
+
+        co2CertificateBasePrice: 100, // medium level (ranges from 10 to 200)
+        reductionTarget: 0.7 // i.e. target is to reduce consumption to 70%
+	}
+</script>
+</head>
+
+<body onload="onload(surveySettings);">
+<div class="centerOuter">
+    <div class="centerInner">
+	<div class="plot">
+		<canvas id="chart" width="370" height="570"></canvas>
+	</div>
+	<div class="inputs">
+		<table class="tabler">
+			<tr>
+				<th id="header_selected" rowspan="3">gewählt</th>
+				<th id="header_measure" rowspan="3">Massnahme</th>
+				<th id="header_parameter" rowspan="3">Ausprägung</th>
+				<th id="header_cost" colspan="2">Kosten (-) /</th>
+				<th id="header_debug" class="tooltip" rowspan="3">debug</th> <!-- &#128064; &#128270; -->
+			</tr>
+
+			<tr>
+				<th id="header_cost2" colspan="2">Einnahmen (+)</th>
+			</tr>
+
+			<tr>
+				<th id="header_cost3investment">einmalig</th>
+				<th id="header_cost3annual">jährlich</th>
+			</tr>
+
+<!-- Mobility -->
+			<tr class="mobility">
+				<td><input type="checkbox" id="replace_car"></td>
+				<td id="replace_car_text">Auto ersetzen durch</td>
+				<td>
+					<select id="replace_car_select">
+						<option id="petrol-small" value="petrol-small">Benzin, klein</option>
+						<option id="petrol-medium" value="petrol-medium">Benzin, mittel</option>
+						<option id="petrol-large" value="petrol-large">Benzin, gross</option>
+						
+						<option id="diesel-medium" value="diesel-medium">Diesel, mittel</option>
+						<option id="diesel-large" value="diesel-large">Diesel, gross</option>
+						
+						<option id="phev-medium" value="phev-medium">Hybrid, mittel</option>
+						<option id="phev-large" value="phev-large">Hybrid, gross</option>
+						
+						<option id="bev-small" value="bev-small">Electric, klein</option>
+						<option id="bev-medium" value="bev-medium">Electric, mittel</option>
+						<option id="bev-large" value="bev-large">Electric, gross</option>
+					</select>
+				</td>
+				<td id="replace_car_investment"></td>
+				<td id="replace_car_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="replace_car_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td><input type="checkbox" id="sell_car"></td>
+				<td id="sell_car_text">Auto verkaufen</td>
+				<td></td>
+				<td id="sell_car_investment"></td>
+				<td id="sell_car_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="sell_car_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td><input type="checkbox" id="reduce_kilometrage_car"></td>
+				<td id="reduce_kilometrage_car_text">Fahrleistung Auto reduzieren um</td>
+				<td>
+					<select id="reduce_kilometrage_car_select">
+						<option value="0.0">0%</option>
+						<option value="0.1">10%</option>
+						<option value="0.2">20%</option>
+						<option value="0.3">30%</option>
+						<option value="0.4">40%</option>
+						<option value="0.5">50%</option>
+						<option value="0.6">60%</option>
+						<option value="0.7">70%</option>
+						<option value="0.8">80%</option>
+						<option value="0.9">90%</option>
+						<option value="1.0">100%</option>
+					</select>
+				</td>
+				<td id="reduce_kilometrage_car_investment"></td>
+				<td id="reduce_kilometrage_car_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="reduce_kilometrage_car_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td></td>
+				<td id="compensate_kilometrage_car_by_pt_short_text">Kompensation durch ÖV (Nahverkehr)</td>
+				<td>
+					<select id="compensate_kilometrage_car_by_pt_short_select">
+						<option value="0.0">0%</option>
+						<option value="0.1">10%</option>
+						<option value="0.2">20%</option>
+						<option value="0.3">30%</option>
+						<option value="0.4">40%</option>
+						<option value="0.5">50%</option>
+						<option value="0.6">60%</option>
+						<option value="0.7">70%</option>
+						<option value="0.8">80%</option>
+						<option value="0.9">90%</option>
+						<option value="1.0">100%</option>
+					</select>
+				</td>
+				<td id="compensate_kilometrage_car_by_pt_short_investment"></td>
+				<td id="compensate_kilometrage_car_by_pt_short_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="compensate_kilometrage_car_by_pt_short_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td></td>
+				<td id="compensate_kilometrage_car_by_pt_long_text">Kompensation durch ÖV (Fernverkehr)</td>
+				<td>
+					<select id="compensate_kilometrage_car_by_pt_long_select">
+						<option value="0.0">0%</option>
+						<option value="0.1">10%</option>
+						<option value="0.2">20%</option>
+						<option value="0.3">30%</option>
+						<option value="0.4">40%</option>
+						<option value="0.5">50%</option>
+						<option value="0.6">60%</option>
+						<option value="0.7">70%</option>
+						<option value="0.8">80%</option>
+						<option value="0.9">90%</option>
+						<option value="1.0">100%</option>
+					</select>
+				</td>
+				<td id="compensate_kilometrage_car_by_pt_long_investment"></td>
+				<td id="compensate_kilometrage_car_by_pt_long_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="compensate_kilometrage_car_by_pt_long_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td></td>
+				<td id="compensate_kilometrage_car_by_bike_text">Kompensation durch Fahrrad</td>
+				<td>
+					<select id="compensate_kilometrage_car_by_bike_select">
+						<option value="0.0">0%</option>
+						<option value="0.1">10%</option>
+						<option value="0.2">20%</option>
+						<option value="0.3">30%</option>
+						<option value="0.4">40%</option>
+						<option value="0.5">50%</option>
+						<option value="0.6">60%</option>
+						<option value="0.7">70%</option>
+						<option value="0.8">80%</option>
+						<option value="0.9">90%</option>
+						<option value="1.0">100%</option>
+					</select>
+				</td>
+				<td id="compensate_kilometrage_car_by_bike_investment"></td>
+				<td id="compensate_kilometrage_car_by_bike_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="compensate_kilometrage_car_by_bike_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td></td>
+				<td id="compensate_kilometrage_car_by_ebike_text">Kompensation durch E-Bike</td>
+				<td>
+					<select id="compensate_kilometrage_car_by_ebike_select">
+						<option value="0.0">0%</option>
+						<option value="0.1">10%</option>
+						<option value="0.2">20%</option>
+						<option value="0.3">30%</option>
+						<option value="0.4">40%</option>
+						<option value="0.5">50%</option>
+						<option value="0.6">60%</option>
+						<option value="0.7">70%</option>
+						<option value="0.8">80%</option>
+						<option value="0.9">90%</option>
+						<option value="1.0">100%</option>
+					</select>
+				</td>
+				<td id="compensate_kilometrage_car_by_ebike_investment"></td>
+				<td id="compensate_kilometrage_car_by_ebike_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="compensate_kilometrage_car_by_ebike_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td></td>
+				<td id="compensate_kilometrage_car_by_none_text">keine Kompensation</td>
+				<td>
+					<select id="compensate_kilometrage_car_by_none_select">
+						<option value="0.0">0%</option>
+						<option value="0.1">10%</option>
+						<option value="0.2">20%</option>
+						<option value="0.3">30%</option>
+						<option value="0.4">40%</option>
+						<option value="0.5">50%</option>
+						<option value="0.6">60%</option>
+						<option value="0.7">70%</option>
+						<option value="0.8">80%</option>
+						<option value="0.9">90%</option>
+						<option value="1.0">100%</option>
+					</select>
+				</td>
+				<td id="compensate_kilometrage_car_by_none_investment"></td>
+				<td id="compensate_kilometrage_car_by_none_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="compensate_kilometrage_car_by_none_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td><input type="checkbox" id="pt_ticket"></td>
+				<td id="pt_ticket_text">ÖV Ticket</td>
+				<td>
+					<select id="pt_ticket_select">
+						<option id="none" value="none">kein Abonnement</option>
+						<option id="region" value="region">regionales Abonnement</option>
+						<option id="half-fare" value="half-fare">Halb-Tax Abonnement</option>
+						<option id="region-and-half-fare" value="region-and-half-fare">regionales und Halb-Tax Abonnement</option>
+						<option id="season" value="season">General Abonnement</option>
+					</select>
+				</td>
+				<td id="pt_ticket_investment"></td>
+				<td id="pt_ticket_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="pt_ticket_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td><input type="checkbox" id="short_flights"></td>
+				<td id="short_flights_text">Kurzstreckenflüge reduzieren um</td>
+				<td>
+					<select id="short_flights_select">
+						<option value="0">0</option>
+					</select>
+				</td>
+				<td id="short_flights_investment"></td>
+				<td id="short_flights_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="short_flights_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td><input type="checkbox" id="medium_flights"></td>
+				<td id="medium_flights_text">Mittelstreckenflüge reduzieren um</td>
+				<td>
+					<select id="medium_flights_select">
+						<option value="0">0</option>
+					</select>
+				</td>
+				<td id="medium_flights_investment"></td>
+				<td id="medium_flights_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="medium_flights_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="mobility">
+				<td><input type="checkbox" id="long_flights"></td>
+				<td id="long_flights_text">Langstreckenflüge reduzieren um</td>
+				<td>
+					<select id="long_flights_select">
+						<option value="0">0</option>
+					</select>
+				</td>
+				<td id="long_flights_investment"></td>
+				<td id="long_flights_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="long_flights_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+
+<!-- Food -->
+			<tr class="food">
+				<td><input type="checkbox" id="diet"></td>
+				<td id="diet_text">Ernährung</td>
+				<td>
+					<select id="diet_select">
+						<option id="omnivore" value="omnivore">keine Einschränkung</option>
+						<option id="flexitarian" value="flexitarian">flexitarisch</option>
+						<option id="vegetarian" value="vegetarian">vegetarisch</option>
+						<option id="vegan" value="vegan">vegan</option>
+					</select>
+				</td>
+				<td id="diet_investment"></td>
+				<td id="diet_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="diet_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+
+<!-- Housing -->
+			<tr class="housing">
+				<td><input type="checkbox" id="insulate_roof"></td>
+				<td id="insulate_roof_text">Dach dämmen</td>
+				<td></td>
+				<td id="insulate_roof_investment"></td>
+				<td id="insulate_roof_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="insulate_roof_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="housing">
+				<td><input type="checkbox" id="insulate_facade"></td>
+				<td id="insulate_facade_text">Fassade dämmen</td>
+				<td></td>
+				<td id="insulate_facade_investment"></td>
+				<td id="insulate_facade_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="insulate_facade_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="housing">
+				<td><input type="checkbox" id="replace_windows"></td>
+				<td id="replace_windows_text">Fenster austauschen</td>
+				<td></td>
+				<td id="replace_windows_investment"></td>
+				<td id="replace_windows_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="replace_windows_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="housing">
+				<td><input type="checkbox" id="solar_panels"></td>
+				<td id="solar_panels_text">Solaranlage installieren</td>
+				<td></td>
+				<td id="solar_panels_investment"></td>
+				<td id="solar_panels_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="solar_panels_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="housing">
+				<td><input type="checkbox" id="ventilation_system"></td>
+				<td id="ventilation_system_text">kontrollierte Lüftung installieren</td>
+				<td></td>
+				<td id="ventilation_system_investment"></td>
+				<td id="ventilation_system_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="ventilation_system_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="housing">
+				<td><input type="checkbox" id="heat_pump"></td>
+				<td id="heat_pump_text">Wärmepumpe</td>
+				<td></td>
+				<td id="heat_pump_investment"></td>
+				<td id="heat_pump_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="heat_pump_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="housing">
+				<td><input type="checkbox" id="temperature_reduction"></td>
+				<td id="temperature_reduction_text">Temperaturreduktion um</td>
+				<td>
+					<select id="temperature_reduction_select">
+						<option value="0">0°C</option>
+						<option value="1">1°C</option>
+						<option value="2">2°C</option>
+						<option value="3">3°C</option>
+						<option value="4">4°C</option>
+						<option value="5">5°C</option>
+					</select>
+				</td>
+				<td id="temperature_reduction_investment"></td>
+				<td id="temperature_reduction_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="temperature_reduction_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+
+<!-- Other Consumption -->
+			<tr class="other">
+				<td><input type="checkbox" id="co2_certificate"></td>
+				<td id="co2_certificate_text">CO2 Zertifikat kaufen</td>
+				<td>
+					<select id="co2_certificate_select">
+						<option value="0">0 t</option>
+						<option value="1">1 t</option>
+					</select>
+				</td>
+				<td id="co2_certificate_investment"></td>
+				<td id="co2_certificate_annual"></td>
+				<td class="tooltip"><div class="tooltip">&#128270;<pre id="co2_certificate_debug" class="tooltiptext"></pre></div></td>
+			</tr>
+			<tr class="last_row">
+				<td></td>
+				<td id="sum_text">Summe</td>
+				<td></td>
+				<td id="sum_investment"></td>
+				<td id="sum_annual"></td>
+			</tr>
+			<tr>
+				<td colspan="5"></td>
+ 			</tr>
+			<tr>
+				<td id="target_reached" class="target_reached" colspan="5">Sie haben Ihr CO2 Ziel erreicht</td>
+ 			</tr>
+			<tr>
+				<td id="target_not_reached" class="target_not_reached" colspan="5">Sie haben Ihr CO2 Ziel noch nicht erreicht</td>
+ 			</tr>
+		</table>
+	</div>
+</div>
+</div>
+<!-- 	<button id="0" type="button" >Dataset 1</button> -->
+<!-- 	<button id="1" type="button" >Dataset 2</button> -->
+<!-- 	<input type="checkbox" id="scales" name="scales" checked><label for="scales">Scales</label> -->
+
+<script src = "https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script src="evaluator.js" defer></script>
+<script src="evaluator-settings.js"></script>
+
+</body>
+</html>
