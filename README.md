@@ -1,4 +1,7 @@
 # Priority Evaluator
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14218066.svg)](https://doi.org/10.5281/zenodo.14218066)
+
 This repo provides the code for the implementation of an online, survey-based carbon calculator and an online, survey-based priority evaluator, using the software Qualtrics. The carbon calculator and priority evaluator have been developed by the [Swiss Mobility Panel](https://istp.ethz.ch/research/swiss-mobility-panel.html) project team at ETH Zurich.
 
 
