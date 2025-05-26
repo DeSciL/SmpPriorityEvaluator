@@ -16,5 +16,9 @@ These are other resources which are potentially useful.
 
 [Report](https://doi.org/10.3929/ethz-b-000611650) with descriptive Results of wave 3 of the Swiss Mobility Panel, where the priority evaluator was part of.
 
-Data and Codebook of wave 3 of the Swiss Mobility panel (TBA)
+A package containing preprocessed data of the priority evaluator can be installed from Github:
+devtools::install_github("flolichtin/PE", build_vignettes = TRUE)
+
+
+Data and Codebook of wave 3 of the Swiss Mobility panel:  (TBA)
 
